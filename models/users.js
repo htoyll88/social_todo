@@ -1,7 +1,7 @@
 'use strict';
 
 const mongoose = require('mongoose');
-const bcrypt = require('bcrypt');
+//const bcrypt = require('bcrypt');
 
 const SALT_WORK_FACTOR = 10;
 
@@ -25,7 +25,11 @@ const UserSchema = new Schema({
   hashed_password: stringField,
 });
 
-UserSchema.pre('save', function userPreHook(next) {
+UserSchema.statics.count = function(cb) {
+  return this.model('Users').find({}, cb);
+}
+
+/*UserSchema.pre('save', function userPreHook(next) {
   const user = this;
 
   // only hash the password if it has been modified (or is new)
@@ -54,6 +58,6 @@ UserSchema.methods.comparePassword = function comparePassword(candidatePassword,
   });
 };
 
-UserSchema.statics.count = cb => this.model('Users').find({}, cb);
-
+//UserSchema.statics.count = cb => this.model('Users').find({}, cb);
+*/
 module.exports = mongoose.model('Users', UserSchema);

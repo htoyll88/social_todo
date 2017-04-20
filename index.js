@@ -9,7 +9,7 @@ const mongoose = require('mongoose');
 const validator = require('validator');
 
 const app = express();
-mongoose.connect(process.env.MONGO_URL);
+mongoose.connect('mongodb://localhost:27017/social-todo');
 
 const Users = require('./models/users.js');
 const Tasks = require('./models/tasks.js');
@@ -70,15 +70,34 @@ function loadUserTasks(req, res, next) {
 }
 
 // Return the home page after loading tasks for users, or not.
-app.get('/', loadUserTasks, (req, res) => {
-  res.render('index');
+app.get('/', function (req, res)  {
+  Users.count(function(err, users) {
+    if(err) {
+      res.send('error getting users');
+    } else {
+        res.render('index', {userCount: users.length})
+    }
+  });
 });
+
 
 // Handle submitted form for new users
 app.post('/user/register', (req, res) => {
-  res.send('woot');
+  var newUser = new Users();
+  newUser.hashed_password = req.body.password;
+  newUser.email = req.body.email;
+  newUser.name = req.body.fl_name;
+  newUser.save(function(err){
+    if(err){
+      res.send('there was an error saving the user');
+    } else {
+      res.redirect('/');
+    }
+  })
+  console.log('The user has the email address', req.body.email);
 });
 
+/*
 app.post('/user/login', (req, res) => {
   res.send('woot');
 });
@@ -105,7 +124,7 @@ app.post('/tasks/:id/delete', (req, res) => {
 app.post('/task/create', (req, res) => {
   res.send('woot');
 });
-
+*/
 // Start the server
 app.listen(process.env.PORT, () => {
   console.log(`Example app listening on port ${process.env.PORT}`);

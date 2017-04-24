@@ -19,7 +19,7 @@
         {{#if tasks}}
             <ul class="tasks">
             {{#each tasks}}
-                <li>{{this.title}}</li>
+                <li class="task">{{this.name}}</li>
             {{/each}}
             </ul>
         {{else}}
@@ -29,8 +29,8 @@
     <div>
       <h4>Add a new task</h4>
         <form class="createTask" action="/task/create" method="POST">
-          <label for="title">Task name</label>
-          <input name="title" type="text"><br>
+          <label for="name">Task name</label>
+          <input name="name" type="text"><br>
           <label for="description">Task Description</label>
           <input name="description" type="text"><br>
           Collaborators<br>

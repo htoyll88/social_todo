@@ -12,7 +12,6 @@ const stringField = {
 };
 
 const TaskSchema = new Schema({
-  title: stringField,
   owner: ObjectId,
   name: stringField,
   description: stringField,

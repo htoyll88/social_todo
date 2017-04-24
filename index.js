@@ -70,9 +70,9 @@ function loadUserTasks(req, res, next){
     return next();
   }
 
-  Tasks.find({})
-    .or({owner: res.locals.currentUser})
-    .or({collaborator: res.locals.currentUser.email})
+  Tasks.find({}).or([
+      {owner: res.locals.currentUser},
+      {collaborators: res.locals.currentUser.email}])
     .exec(function(err, tasks){
       if(!err){
         res.locals.tasks = tasks;
@@ -159,6 +159,7 @@ app.post('/user/register', (req, res) => {
 });
 
 
+
 app.post('/user/login', function (req, res) {
 	var user = Users.findOne({email: req.body.email}, function(err, user) {
 		if(err || !user) {
@@ -191,8 +192,9 @@ app.use(isLoggedIn);
 app.post('/task/create', function (req, res) {
 	var newTasks = new Tasks();
 	newTasks.owner = res.locals.currentUser._id;
-	newTasks.title = req.body.title;
+	newTasks.name = req.body.name;
 	newTasks.description = req.body.description;
+  //no empty collaborators
 	newTasks.collaborators = [req.body.collaborator1, req.body.collaborator2, req.body.collaborator3];
 	//newTask.isComplete = false;
 	newTasks.save(function(err, savedTasks){
@@ -209,12 +211,12 @@ app.post('/task/create', function (req, res) {
 
 
 
-/*
+
 app.get('/task/complete', function(req, res) {
 
-	console.log('Completing task. Id: ', req.query.id);
+	console.log('Completing task. Id: ', req.query._id);
 
-	task.findById(req.query.id, function(err, completedTask) {
+	task.findOne(req.query._id, function(err, completedTask) {
 		if(err || !completedTask) {
 			console.log('Error finding task on database.');
 			res.redirect('/');
@@ -228,7 +230,7 @@ app.get('/task/complete', function(req, res) {
 });
 
 
-
+/*
 app.get('/task/remove', function(req, res) {
 	console.log('Removing task. Id: ', req.query.id);
 

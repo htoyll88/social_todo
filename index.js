@@ -194,7 +194,6 @@ app.post('/task/create', function (req, res) {
 	newTasks.owner = res.locals.currentUser._id;
 	newTasks.name = req.body.name;
 	newTasks.description = req.body.description;
-  //no empty collaborators
 	newTasks.collaborators = [req.body.collaborator1, req.body.collaborator2, req.body.collaborator3];
 	//newTask.isComplete = false;
 	newTasks.save(function(err, savedTasks){

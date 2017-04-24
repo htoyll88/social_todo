@@ -41,6 +41,7 @@ app.use(session({
 
 
 function isLoggedIn(req, res, next) {
+  console.log('res.locals.currentUser = ' , res.locals.currentUser);
 	if(res.locals.currentUser) {
 		next();
 	}
@@ -50,7 +51,7 @@ function isLoggedIn(req, res, next) {
 }
 
 
-function loadUserTasks(req, res, next){
+/*function loadUserTasks(req, res, next){
   if(!res.locals.currentUser){
     return next();
   }
@@ -61,7 +62,24 @@ function loadUserTasks(req, res, next){
     }
     next();
   })
-}
+}*/
+
+
+function loadUserTasks(req, res, next){
+  if(!res.locals.currentUser){
+    return next();
+  }
+
+  Tasks.find({})
+    .or({owner: res.locals.currentUser})
+    .or({collaborator: res.locals.currentUser.email})
+    .exec(function(err, tasks){
+      if(!err){
+        res.locals.tasks = tasks;
+      }
+      next();
+    })
+  }
 
 
 
@@ -92,7 +110,7 @@ app.use(function(req,res, next){
 
 
 // Return the home page after loading tasks for users, or not.
-app.get('/', loadUserTasks, function (req, res)  {
+app.get('/' , loadUserTasks, function (req, res)  {
   Users.count(function(err, users) {
     if(err) {
       res.send('error getting users');
@@ -170,16 +188,17 @@ app.post('/user/login', function (req, res) {
 
 app.use(isLoggedIn);
 
-app.post('/tasks/create', function (req, res) {
-	var newTask = new Tasks();
-	newTask.owner = res.locals.currentUser._id;
-	newTask.title = req.body.title;
-	newTask.description = req.body.description;
-	newTask.collaborators = [req.body.collaborator1, req.body.collaborator2, req.body.collaborator3];
+app.post('/task/create', function (req, res) {
+	var newTasks = new Tasks();
+	newTasks.owner = res.locals.currentUser._id;
+	newTasks.title = req.body.title;
+	newTasks.description = req.body.description;
+	newTasks.collaborators = [req.body.collaborator1, req.body.collaborator2, req.body.collaborator3];
 	//newTask.isComplete = false;
-	newTask.save(function(err, savedTask){
-		if(err || !savedTask){
-			res.send('Error saving task to the database.');
+	newTasks.save(function(err, savedTasks){
+		if(err || !savedTasks){
+      res.render('index', {errors: "Error saving to database"});
+			return;
 		}
 		else {
 			// console.log('New task added: ', task.title);

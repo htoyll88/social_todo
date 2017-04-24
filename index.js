@@ -9,7 +9,7 @@ const mongoose = require('mongoose');
 const validator = require('validator');
 
 const app = express();
-mongoose.connect('mongodb://localhost:27017/social-todo');
+mongoose.connect(process.env.MONGO_URL);
 
 const Users = require('./models/users.js');
 const Tasks = require('./models/tasks.js');
@@ -32,50 +32,75 @@ app.use(session({
   secret: process.env.SESSION_SECRET,
   resave: false,
   saveUninitialized: true,
-  cookie: {
-    secure: 'auto',
-  },
-  store,
+  cookie: {secure: 'auto'},
+  store: store
 }));
 
 // Middleware that looks up the current user for this sesssion, if there
 // is one.
-app.use((req, res, next) => {
-  if (req.session.userId) {
-    Users.findById(req.session.userId, (err, user) => {
-      if (!err) {
+
+
+function isLoggedIn(req, res, next) {
+	if(res.locals.currentUser) {
+		next();
+	}
+	else {
+		res.sendStatus(403);
+	}
+}
+
+
+function loadUserTasks(req, res, next){
+  if(!res.locals.currentUser){
+    return next();
+  }
+
+  Tasks.find({owner: res.locals.currentUser}, function(err, tasks){
+    if(!err){
+      res.locals.tasks = tasks;
+    }
+    next();
+  })
+}
+
+
+
+app.use(function(req,res, next){
+  console.log('req.session =', req.session);
+  if(req.session.userId){
+    Users.findOne(req.session.userId, function(err, user){
+      if(!err){
         res.locals.currentUser = user;
       }
       next();
-    });
+    })
   } else {
-    next();
+     next();
   }
-});
-
+})
 // Middleware that checks if a user is logged in. If so, the
 // request continues to be processed, otherwise a 403 is returned.
-function isLoggedIn(req, res, next) {
-  if (res.locals.currentUser) {
-    next();
-  } else {
-    res.sendStatus(403);
-  }
-}
+
+
 
 // Middleware that loads a users tasks if they are logged in.
-function loadUserTasks(req, res, next) {
+/*function loadUserTasks(req, res, next) {
   // Removed
   next();
-}
+}*/
+
+
 
 // Return the home page after loading tasks for users, or not.
-app.get('/', function (req, res)  {
+app.get('/', loadUserTasks, function (req, res)  {
   Users.count(function(err, users) {
     if(err) {
       res.send('error getting users');
     } else {
-        res.render('index', {userCount: users.length})
+        res.render('index', {
+          userCount: users.length,
+          currentUser: res.locals.currentUser
+      });
     }
   });
 });
@@ -83,30 +108,132 @@ app.get('/', function (req, res)  {
 
 // Handle submitted form for new users
 app.post('/user/register', (req, res) => {
+  if(req.body.password !== req.body.passwordConfirmation) {
+    return res.render('index', {errors: "Password and password confirmation do not match"});
+  }
   var newUser = new Users();
   newUser.hashed_password = req.body.password;
   newUser.email = req.body.email;
-  newUser.name = req.body.fl_name;
-  newUser.save(function(err){
+  newUser.name = req.body.name;
+  newUser.save(function(err, user){
+
+    if(req.body.password.length < 1 || req.body.password.length > 50) {
+      err = 'Bad password';
+      res.render('index', {errors: err});
+      return;
+    }
+    else if(req.body.name.length < 1 || req.body.name.length > 50) {
+      err = 'Name must be between 1 and 50 character.';
+      res.render('index', {errors: err});
+      return;
+    }
+
+
     if(err){
-      res.send('there was an error saving the user');
+      err = "Error registering you";
+      res.render('index', {errors: err});
     } else {
+      req.session.userId = user._id;
       res.redirect('/');
     }
   })
   console.log('The user has the email address', req.body.email);
 });
 
+
+app.post('/user/login', function (req, res) {
+	var user = Users.findOne({email: req.body.email}, function(err, user) {
+		if(err || !user) {
+			res.render('index', {errors: "Invalid email address"});
+			return;
+		}
+
+
+
+		user.comparePassword(req.body.password, function(err, isMatch) {
+			if(err || !isMatch){
+				res.render('index', {errors: 'Invalid password'});
+				console.log('\n\nInvalid password.\n\n');
+				// res.render('index', {errors: 'Invalid password'});
+				return;
+	   		}
+		   	else{
+				req.session.userId = user._id;
+				res.redirect('/');
+				return;
+		   	}
+
+		});
+	});
+});
+
+
+app.use(isLoggedIn);
+
+app.post('/tasks/create', function (req, res) {
+	var newTask = new Tasks();
+	newTask.owner = res.locals.currentUser._id;
+	newTask.title = req.body.title;
+	newTask.description = req.body.description;
+	newTask.collaborators = [req.body.collaborator1, req.body.collaborator2, req.body.collaborator3];
+	//newTask.isComplete = false;
+	newTask.save(function(err, savedTask){
+		if(err || !savedTask){
+			res.send('Error saving task to the database.');
+		}
+		else {
+			// console.log('New task added: ', task.title);
+			res.redirect('/');
+		}
+	});
+});
+
+
+
 /*
-app.post('/user/login', (req, res) => {
-  res.send('woot');
+app.get('/task/complete', function(req, res) {
+
+	console.log('Completing task. Id: ', req.query.id);
+
+	task.findById(req.query.id, function(err, completedTask) {
+		if(err || !completedTask) {
+			console.log('Error finding task on database.');
+			res.redirect('/');
+		}
+		else {
+			console.log("Method called.");
+			completedTask.completeTask();
+			res.redirect('/');
+		}
+	});
 });
 
-// Log a user out
-app.get('/user/logout', (req, res) => {
-  res.send('woot');
+
+
+app.get('/task/remove', function(req, res) {
+	console.log('Removing task. Id: ', req.query.id);
+
+	task.findById(req.query.id, function(err, taskToRemove) {
+		if(err || !taskToRemove) {
+			console.log('Error finding task on database.');
+			res.redirect('/');
+		}
+		else {
+			taskToRemove.remove();
+			res.redirect('/');
+		}
+	});
+});
+*/
+
+app.get('/user/logout', function(req, res){
+  req.session.destroy(function(){
+    res.redirect('/');
+  });
 });
 
+
+/*
 //  All the controllers and routes below this require
 //  the user to be logged in.
 app.use(isLoggedIn);

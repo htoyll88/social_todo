@@ -12,11 +12,12 @@ const stringField = {
 };
 
 const TaskSchema = new Schema({
+  title: stringField,
   owner: ObjectId,
   name: stringField,
   description: stringField,
   isComplete: Boolean,
-  collaborators: [String],
+  collaborators: [String]
 });
 
 module.exports = mongoose.model('Tasks', TaskSchema);

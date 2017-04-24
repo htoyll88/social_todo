@@ -1,7 +1,7 @@
 'use strict';
 
 const mongoose = require('mongoose');
-//const bcrypt = require('bcrypt');
+const bcrypt = require('bcrypt');
 
 const SALT_WORK_FACTOR = 10;
 
@@ -29,18 +29,18 @@ UserSchema.statics.count = function(cb) {
   return this.model('Users').find({}, cb);
 }
 
-/*UserSchema.pre('save', function userPreHook(next) {
+UserSchema.pre('save', function userPreHook(next) {
   const user = this;
 
   // only hash the password if it has been modified (or is new)
   if (!user.isModified('hashed_password')) return next();
 
   // generate a salt
-  return bcrypt.genSalt(SALT_WORK_FACTOR, (err, salt) => {
+  return bcrypt.genSalt(SALT_WORK_FACTOR, function(err, salt){
     if (err) return next(err);
 
     // hash the password using our new salt
-    return bcrypt.hash(user.hashed_password, salt, (err2, hash) => {
+    return bcrypt.hash(user.hashed_password, salt, function(err2, hash){
       if (err2) return next(err2);
 
       // override the cleartext password with the hashed one
@@ -59,5 +59,5 @@ UserSchema.methods.comparePassword = function comparePassword(candidatePassword,
 };
 
 //UserSchema.statics.count = cb => this.model('Users').find({}, cb);
-*/
+
 module.exports = mongoose.model('Users', UserSchema);

@@ -173,6 +173,7 @@ app.post('/user/login', function (req, res) {
 			if(err || !isMatch){
 				res.render('index', {errors: 'Invalid password'});
 				console.log('\n\nInvalid password.\n\n');
+
 				// res.render('index', {errors: 'Invalid password'});
 				return;
 	   		}
@@ -223,6 +224,21 @@ app.get('/task/complete', function(req, res) {
 		else {
 			console.log("Method called.");
 			completedTask.completeTask();
+			res.redirect('/');
+		}
+	});
+});
+
+app.get('/task/remove', function(req, res) {
+	console.log('Removing task. Id: ', req.query.id);
+
+	task.findById(req.query.id, function(err, taskToRemove) {
+		if(err || !taskToRemove) {
+			console.log('Error finding task on database.');
+			res.redirect('/');
+		}
+		else {
+			taskToRemove.remove();
 			res.redirect('/');
 		}
 	});

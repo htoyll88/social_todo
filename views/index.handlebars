@@ -19,15 +19,8 @@
         {{#if tasks}}
             <ul class="tasks">
             {{#each tasks}}
-                <li class="task">{{this.name}}</li>>
-                  <span class="task-name">Finish Slide notes</span>
-                    <form method="post" action="/tasks/58ff3e7ce9894000080cf5e5/delete">
-                      <input type="submit" name="delete" class="delete" value="delete">
-                    </form>
-                  <form method="post" action="/tasks/58ff3e7ce9894000080cf5e5/complete">
-                    <input type="submit" name="toggle" class="toggle" value="Mark complete">
-                  </form>
-                </li>
+              <li="task completed">{{this.name}}
+            </li>
             {{/each}}
             </ul>
         {{else}}

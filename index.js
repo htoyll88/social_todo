@@ -9,7 +9,7 @@ const mongoose = require('mongoose');
 const validator = require('validator');
 
 const app = express();
-console.log(process.env.MONGO_URL);
+//console.log(process.env.MONGO.URL);
 mongoose.connect(process.env.MONGO_URL);
 
 const Users = require('./models/users.js');
@@ -196,11 +196,15 @@ app.post('/task/create', function (req, res) {
 	var newTasks = new Tasks();
 	newTasks.owner = res.locals.currentUser._id;
 	newTasks.name = req.body.name;
+  //NewTasks.isComplete = false;
 	newTasks.description = req.body.description;
 	newTasks.collaborators = [req.body.collaborator1, req.body.collaborator2, req.body.collaborator3];
 	//newTask.isComplete = false;
+  var collaborator1 = req.body.collaborator1;
+  var collaborator2 = req.body.collaborator2;
+  var collaborator3 = req.body.collaborator3;
 	newTasks.save(function(err, savedTasks){
-		if(err || !savedTasks){
+		if(err || !savedTasks || !collaborator1.includes("@") || !collaborator2.includes("@") || !collaborator3.includes("@")){
       res.render('index', {errors: "Error saving to database"});
 			return;
 		}
@@ -213,7 +217,7 @@ app.post('/task/create', function (req, res) {
 
 
 
-
+/*
 app.get('/task/complete', function(req, res) {
 
 	console.log('Completing task. Id: ', req.query._id);
@@ -245,7 +249,7 @@ app.get('/task/remove', function(req, res) {
 		}
 	});
 });
-
+*/
 
 /*
 app.get('/task/remove', function(req, res) {
@@ -275,20 +279,19 @@ app.get('/user/logout', function(req, res){
 //  All the controllers and routes below this require
 //  the user to be logged in.
 app.use(isLoggedIn);
-
-// Handle submission of new task form
+//Handle submission of new task form
 app.post('/tasks/:id/:action(complete|incomplete)', (req, res) => {
-  res.send('woot');
+  //isComplete = false;
+  var ID = req.params.id;
+  var act = req.params.action;
+  //Tasks.update({_id: ID})
 });
 
+/*
 app.post('/tasks/:id/delete', (req, res) => {
   res.send('woot');
 });
 
-// Handle submission of new task form
-app.post('/task/create', (req, res) => {
-  res.send('woot');
-});
 */
 // Start the server
 app.listen(process.env.PORT, () => {

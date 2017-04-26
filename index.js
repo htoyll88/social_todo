@@ -15,8 +15,6 @@ const Users = require('./models/users.js');
 const Tasks = require('./models/tasks.js');
 
 
-//hope something works 
-
 // Configure our app
 const store = new MongoDBStore({
   uri: process.env.MONGO_URL,

@@ -275,24 +275,68 @@ app.get('/user/logout', function(req, res){
 });
 
 
-/*
+
 //  All the controllers and routes below this require
 //  the user to be logged in.
 app.use(isLoggedIn);
 //Handle submission of new task form
 app.post('/tasks/:id/:action(complete|incomplete)', (req, res) => {
   //isComplete = false;
-  var ID = req.params.id;
+  /*var ID = req.params.id;
   var act = req.params.action;
   //Tasks.update({_id: ID})
+  query = {_id:req.params.id};
+  callback function
 });
-
-/*
-app.post('/tasks/:id/delete', (req, res) => {
-  res.send('woot');
-});
-
 */
+  const action = {
+      '$set': {
+        complete: true
+      }
+  };
+  const currentURL = "currentURL"
+ const query = {_id: req.params.id};
+ Tasks.update(query, action, function(err, results){
+   res.redirect(currentURL);
+ });
+
+
+
+
+console.log('Completing task. Id: ', req.query.id);
+
+	// tasks.findOne(req.query.id, function(err, completedTask) {
+	// 	if(err || !completedTask) {
+	// 		console.log('Error finding task on database.');
+	// 		res.redirect('/');
+	// 	}
+	// 	else {
+	// 		console.log("Method called.");
+	// 	  completedTasks.completedTasks();
+	// 		res.redirect('/');
+  //
+	// 	}
+	// });
+});
+
+
+
+app.post('/tasks/:id/delete', (req, res) => {
+  console.log('Removing task. Id: ', req.query.id);
+
+  tasks.One(req.query.id, function(err, taskToRemove) {
+    if(err || !taskToRemove) {
+      console.log('Error finding task on database.');
+      res.redirect('/');
+    }
+    else {
+      tasksToRemove.remove();
+      res.redirect('/');
+    }
+  });
+});
+
+
 // Start the server
 app.listen(process.env.PORT, () => {
   console.log(`Example app listening on port ${process.env.PORT}`);
